@@ -12,7 +12,12 @@ const path         = require('path');
 const session    = require("express-session");
 const MongoStore = require('connect-mongo')(session);
 const flash      = require("connect-flash");
-    
+const cors       = require("cors");
+const chalk      = require("chalk");
+const cows       = require("cows");
+const vacas      = cows();
+const vacaRandom = vacas[Math.floor(Math.random() * 250)];
+const cloudinary = require('./config/cloudinary');
 
 mongoose.Promise = Promise;
 mongoose
@@ -27,11 +32,11 @@ const app_name = require('./package.json').name;
 const debug = require('debug')(`${app_name}:${path.basename(__filename).split('.')[0]}`);
 
 const app = express();
-
+app.use(cors());
 // Middleware Setup
 app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({limit:'50mb', extended: true}));
+app.use(bodyParser.urlencoded({ limit:'50mb', extended: true }));
 app.use(cookieParser());
 
 // Express View engine setup
@@ -41,11 +46,12 @@ app.use(require('node-sass-middleware')({
   dest: path.join(__dirname, 'public'),
   sourceMap: true
 }));
-      
+
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'client/build')));
 app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));
 
 
@@ -58,7 +64,7 @@ hbs.registerHelper('ifUndefined', (value, options) => {
       return options.fn(this);
   }
 });
-  
+
 
 // default value for title local
 app.locals.title = 'Express - Generated with IronGenerator';
@@ -73,13 +79,18 @@ app.use(session({
 }))
 app.use(flash());
 require('./passport')(app);
-    
+
 
 const index = require('./routes/index');
 app.use('/', index);
 
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
-      
 
+// const photosRoutes = require('./routes/photos');
+// app.use('/auth', photosRoutes);
+
+require('./routes/photos')(app)
+
+console.log(chalk.yellow(vacaRandom));
 module.exports = app;
